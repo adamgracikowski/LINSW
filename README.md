@@ -16,9 +16,9 @@ make raspberrypi4_64_defconfig \
 ```
 
 ```bash
-
-```
-
-```bash
-
+mkdir -p package/quiz \
+  && cd package/quiz \
+  && touch Config.in \
+  && touch quiz.mk \
+  && nano Config.in
 ```
