@@ -9,12 +9,13 @@ mkdir -p /malina/gracikowskia/ccache-br \
   && cd buildroot-2024.11.2
 ```
 
-Wstępna konfiguracja:
+Wstępna konfiguracja Buildroot-a:
 ```bash
 make raspberrypi4_64_defconfig \
   && make nconfig
 ```
 
+Wstępna konfiguracja pakietu `quiz`:
 ```bash
 mkdir -p package/quiz/src \
   && cd package/quiz \
@@ -25,7 +26,7 @@ mkdir -p package/quiz/src \
   && touch src/Makefile \
   && nano Config.in
 ```
-
+Wstępna konfiguracja pakietu `c-periphery`:
 ```bash
 mkdir -p package/c-periphery \
   && cd package/c-periphery \
