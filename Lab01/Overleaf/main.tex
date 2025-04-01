@@ -1,0 +1,222 @@
+\documentclass{article}
+%----------------------------------------------------------------------
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{siunitx}
+\usepackage{enumitem}
+\usepackage{listings}  % Pakiet do formatowania kodu
+\usepackage{xcolor}    % Pakiet do kolorowania składni
+
+% Definicja stylu dla Lua
+\lstdefinelanguage{Lua}{
+    morekeywords={and, break, do, else, elseif, end, false, for, function, if, in, local, nil, not, or, repeat, return, then, true, until, while},
+    sensitive=true,
+    morecomment=[l]--,
+    morecomment=[s]{--[[}{]]},
+    morestring=[b]",
+    morestring=[b]',
+}
+
+% Definicja stylu dla msmtprc
+\lstdefinelanguage{msmtprc}{
+    morekeywords={account, host, port, from, auth, user, password, tls, tls_starttls, logfile},
+    sensitive=false,
+    morecomment=[l]\#,
+}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{gray},
+    backgroundcolor=\color{lightgray!20},
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    breaklines=true,
+    captionpos=b
+}
+%----------------------------------------------------------------------
+% strona tytułowa:
+
+\begin{document}
+\begin{titlepage}
+    \centering
+    \vfill    
+    {\fontsize{40}{20}\selectfont \textbf{Linux w systemach wbudowanych} \par}
+    \vspace{2cm}
+    {\fontsize{30}{20}\selectfont Laboratorium L1 G1\par}
+    \vspace{2cm}
+    {\fontsize{20}{20}\selectfont Sprawozdanie\par}
+    \vfill
+    {\fontsize{15}{20}\selectfont Adam Grącikowski, 327350\par}
+    \vspace{1cm}
+    Warszawa, \today
+\end{titlepage}
+
+
+%----------------------------------------------------------------------
+
+\section{Cel ćwiczenia laboratoryjnego}
+\label{Cel}
+
+ Celem ćwiczenia jest zapoznanie się z:
+
+ \begin{itemize}
+     \item środowiskiem Buildroot,
+     \item platformą Raspberry Pi 4,
+     \item akcesoriami dostępnymi na laboratorium,
+ \end{itemize}
+
+a także wygenerowanie dla Raspberry Pi 4 za pomocą Buildroota obraz systemu, wykorzystującego jądro Linux, spełniający wymagania opisane w rozdziale \ref{Wymagania}.
+
+\section{Wymagania}
+\label{Wymagania}
+
+\begin{enumerate}[label=\arabic*.]
+    \item System powinien używać \texttt{Initramfs} (początkowy ramdysk) jako głównego systemu plików.
+    \item Powinno być ustawione hasło dla użytkownika  \texttt{root}.
+    \item System powinien być wyposażony w serwer ssh (zalecany  \texttt{dropbear} - względnie łatwy w konfig
+    uracji). Powinna istnieć możliwość zalogowania się do systemu z sieci.
+    \item Standardowy komunikat  \texttt{“Welcome to Buildroot”} wyświetlany przy starcie systemu należy zastąpić komunikatem dostosowanym do indywidualnych potrzeb, zawierającym imię i nazwisko studenta,
+    w moim przypadku \texttt{“Welcome Adam Gracikowski”}.
+    \item Data i czas w systemie powinny być ustawiane automatycznie z serwera NTP.
+    \item  System powinien zawierać skrypt napisany w języku Lua, który podczas uruchamiania systemu i jego wyłączania, skrypt wysyła e-maila z powiadomieniem o tym
+    fakcie.
+\end{enumerate}
+
+\section{Opis modyfikacji i konfiguracji Buildroota}
+
+\begin{enumerate}[label=\arabic*.]
+    \item Pobranie środowiska Buildroot, rozpakowanie oraz dokonanie wstępnej konfiguracji poprzez: \texttt{make raspberrypi4\_64\_defconfig}.
+    \item \texttt{System configuration > Run a getty (login prompt) after boot > TTY port} ustawione na \texttt{console}.
+    \item \texttt{Build options > Mirrors and Download locations > Primary download site} ustawione na \texttt{http://192.168.137.24/dl}.
+    \item \texttt{Toolchain > Toolchain type} ustawione na \texttt{External toolchain}.
+    \item \texttt{Build options > Enable compiler cache} zaznaczone i \texttt{Compiler cache location} ustawione na \texttt{/home/adam/linsw/ccache-br}.
+    \item \texttt{Filesystem images} zaznaczona opcja \texttt{initial RAM filesystem 
+linked into linux kernel} oraz \texttt{Compression method} ustawione na \texttt{gzip}.
+    \item W pliku \texttt{board/raspberrypi4-64/genimage.cfg.in} parametr \texttt{size} ustawiony na \texttt{128M}.
+    \item \texttt{System configuration > Enable root login and password > Root password} ustawione na przykładowe hasło \texttt{root,123}.
+    \item \texttt{Target packages > Networking applications} zaznaczona opcja \texttt{dropbear}.
+    \item \texttt{System configuration > System banner} ustawione na \texttt{Welcome Adam Gracikowski}.
+    \item \texttt{Target packages > Networking applications} zaznaczone \texttt{ntp} i dalej 
+    \texttt{ntpd}, \texttt{ntpdate} oraz \texttt{ntptime}.
+    \item \texttt{System configuration > Install timezone info > default local time} ustawione na \texttt{Europe/Warsaw}.
+    \item \texttt{System configuration > Root filesystem overlay directories} ustawione na \texttt{board/overlay}.
+    \item \texttt{Target packages > Interpreter languages and scripting} zaznaczone \texttt{lua} i dalej \texttt{Lua 5.3.x}.
+    \item W folderze \texttt{board} utworzono folder \texttt{overlay}, a w nim plik \texttt{etc/init.d/S99email} i nadano mu uprawnienia do wykonywania przy pomocy polecenia: \texttt{chmod +x S99email}. Zawartość skryptu w języku Lua umieszczono w archiwum wraz ze sprawozdaniem.
+    \item \texttt{Target packages > Mail} zaznaczone \texttt{heirloom-mailx} oraz \texttt{msmtp}.
+    \item \texttt{Target packages > Libraries > Crypto} zaznaczone \texttt{CA Certificates} oraz \texttt{openssl support}.
+    \item W folderze \texttt{board/overlay/etc} dodano pliki konfiguracyjne \texttt{msmtprc} oraz \texttt{mail.rc}. Prawa dostępu do pliku zostały ograniczone przy pomocy polecenia: \texttt{chmod 600 msmtprc}. Zawartość plików umieszczono w archiwum wraz ze sprawozdaniem. 
+\end{enumerate}
+
+\section{Opis plików konfiguracyjnych i skryptów dołączonych do archiwum}
+
+Plik \texttt{msmtprc} to plik konfiguracyjny, dla programu \texttt{msmtp}, który służy do wysyłania e-maili z linii poleceń. W pliku m.in. zdefiniowane jest konto, które będzie używane do wysyłania wiadomości e-mail. W celu wykonania zadania stworzone zostało dedykowane konto \textit{Google} wraz z wygenerowanym dla niego \textit{App password}, które pozwala na automatyzacje wysyłania wiadomosci e-mailowych. Określony został rownież serwer i port.
+
+Plik \texttt{mail.rc} określa, że w przypadku używania komend do wysyłania maili, system powinien używać programu \texttt{msmtp}.
+
+Skrypt \texttt{S99email} to skrypt w jezyku Lua, który wysyła odpowiedni e-mail w zależnosci od akcji podanej jako parametr z konsoli. Polecenie przekazywane do konsoli jest również drukowane na konsoli w celu sprawdzenia działania skryptu. Skrypt ten jest automatycznie wywoływany podczas takich akcji jak \texttt{start}, \texttt{stop}, \texttt{reload} i \texttt{restart}. W skrypcie tym został wpisany na stałe w zmiennej \texttt{email\_recipient} adres e-mail adresata wiadomości (w celach testowych). W przypadku własnego testowania należy zmienić adres na własny.
+
+\newpage
+
+\subsection{Skrypt w języku Lua}
+
+Poniżej znajduje się wykorzystany skrypt w języku Lua:
+
+\begin{lstlisting}[language=Lua, caption=Skrypt Lua., label=lst:lua]
+#!/usr/bin/lua
+
+---
+--- This script sends an email on system startup and shutdown with a delay.
+---
+
+local email_recipient = "adgrac@op.pl"
+local subject_prefix = "System notification"
+
+local function send_email(action)
+    local subject = subject_prefix .. ": " .. action
+    local body = "System " .. action
+
+    -- Construct the msmtp command
+    local email_command = string.format(
+        "echo -e \"Subject: %s\\n\\n%s\" | msmtp %s",
+        subject, body, email_recipient
+    )
+
+    -- Print execution status
+    print("Executing Lua script at system " .. action .. "...")
+
+    -- Introduce a 5-second delay before sending the email
+    print("Waiting for 5 seconds before sending email...")
+    os.execute("sleep 5")
+
+    -- Print the command for debugging
+    print("Executing command: " .. email_command)
+
+    -- Execute the command
+    os.execute(email_command)
+
+    -- Confirm execution
+    print("Email sent successfully for system " .. action)
+end
+
+local action = arg[1]
+
+if action == "start" or action == "stop" then
+    send_email(action)
+else
+    print("Usage: " .. arg[0] .. " <start|stop>")
+end
+
+
+\end{lstlisting}
+
+\newpage
+
+\subsection{Plik konfiguracyjny \texttt{msmtp}}
+
+Poniżej znajduje się konfiguracja pliku \texttt{msmtprc}:
+
+\begin{lstlisting}[language=msmtprc, caption=Plik konfiguracyjny \texttt{msmtp}., label=lst:msmtprc]
+defaults
+auth           on
+tls            on
+tls_starttls   off
+
+account        gmail
+host           smtp.gmail.com
+port           465
+
+from           linsw.mini@gmail.com
+user           linsw.mini
+password       ...
+
+account default : gmail
+\end{lstlisting}
+
+\subsection{Plik konfiguracyjny \texttt{mail.rc}}
+
+Poniżej znajduje się konfiguracja pliku \texttt{mail.rc}:
+
+\begin{lstlisting}[language=msmtprc, caption=Plik konfiguracyjny \texttt{mail.rc}., label=lst:mailrc]
+set sendmail=/usr/bin/msmtp
+\end{lstlisting}
+
+%----------------------------------------------------------------------
+% bibliografia:
+
+\begin{thebibliography}{9}
+\bibitem{msmtp} \texttt{msmtp} ArchWiki - https://wiki.archlinux.org/title/Msmtp, dostęp \today
+\bibitem{Arnaud R} Arnaud R, \textit{Send emails from your terminal with msmtp} - https://arnaudr.io/2020/08/24/send-emails-from-your-terminal-with-msmtp/, dostęp \today
+\bibitem{app-password} App password - https://support.google.com/accounts/answer/185833?hl=en, dostęp \today
+\end{thebibliography}
+%----------------------------------------------------------------------
+\end{document}
