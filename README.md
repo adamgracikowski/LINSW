@@ -16,9 +16,20 @@ make raspberrypi4_64_defconfig \
 ```
 
 ```bash
-mkdir -p package/quiz \
+mkdir -p package/quiz/src \
   && cd package/quiz \
   && touch Config.in \
   && touch quiz.mk \
+  && touch src/quiz.c \
+  && touch src/quiz.h \
+  && touch src/Makefile \
+  && nano Config.in
+```
+
+```bash
+mkdir -p package/c-periphery \
+  && cd package/c-periphery \
+  && touch Config.in \
+  && touch c-periphery.mk \
   && nano Config.in
 ```
