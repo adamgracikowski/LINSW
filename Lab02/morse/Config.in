@@ -1,0 +1,6 @@
+config BR2_PACKAGE_MORSE
+    bool "morse"
+    select BR2_C_PERIPHERY
+    help
+      A simple console application written in C 
+      using c-periphery library for gpio communication.
