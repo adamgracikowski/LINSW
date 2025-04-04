@@ -9,6 +9,14 @@ mkdir -p /malina/gracikowskia/ccache-br \
   && cd buildroot-2024.11.2
 ```
 
+```bash
+mkdir -p /home/adam/linsw/ccache-br \
+  && cd /home/adam/linsw \
+  && wget https://buildroot.org/downloads/buildroot-2024.11.2.tar.xz \
+  && tar -xJf buildroot-2024.11.2.tar.xz \
+  && cd buildroot-2024.11.2
+```
+
 Wstępna konfiguracja Buildroot-a:
 ```bash
 make raspberrypi4_64_defconfig \
@@ -24,13 +32,5 @@ mkdir -p package/quiz/src \
   && touch src/quiz.c \
   && touch src/quiz.h \
   && touch src/Makefile \
-  && nano Config.in
-```
-Wstępna konfiguracja pakietu `c-periphery`:
-```bash
-mkdir -p package/c-periphery \
-  && cd package/c-periphery \
-  && touch Config.in \
-  && touch c-periphery.mk \
-  && nano Config.in
+  && ls ./*
 ```
