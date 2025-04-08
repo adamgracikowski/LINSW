@@ -9,6 +9,9 @@
 \usepackage{geometry}
 \usepackage{float}
 \usepackage{siunitx}
+\usepackage{enumitem}
+\usepackage{dirtree}
+\usepackage{verbatim}
 %----------------------------------------------------------------------
 % strona tytułowa:
 
@@ -18,7 +21,7 @@
     \vfill    
     {\fontsize{40}{20}\selectfont \textbf{Linux w systemach wbudowanych} \par}
     \vspace{2cm}
-    {\fontsize{30}{20}\selectfont Laboratorium L2A G1\par}
+    {\fontsize{30}{20}\selectfont Laboratorium L2 G1\par}
     \vspace{2cm}
     {\fontsize{20}{20}\selectfont Sprawozdanie\par}
     \vfill
@@ -36,13 +39,121 @@
 %----------------------------------------------------------------------
 \section{Cel ćwiczenia laboratoryjnego}
 
+Celem ćwiczenia laboratoryjnego jest zapoznanie się z:
+
+\begin{itemize}
+    \item procesem implementacji własnego pakietu środowiska Buildroot,
+    \item obsługą przycisków i diod LED.
+\end{itemize}
+
+\section{Wymagania}
+
+\begin{enumerate}[label=\arabic*.]
+    \item Implementacja aplikacji w języku kompilowanym, obsługującej przyciski i diody LED.
+    \item Przetestowanie korzystania z debugger'a przy uruchamianiu aplikacji.
+    \item Przekształcenie aplikacji w pakiet Buildroot'a.
+\end{enumerate}
+
+\section{Opis aplikacji}
+
+Aplikacja realizuje prosty symulator alfabetu Morse'a z interfejsem opartym o trzy przyciski i jedną diodę LED.
+
+\subsection{Funkcjonalności przycisków}
+
+Funkcjonalności przycisków są następujące:
+
+\begin{itemize}
+    \item Przycisk \texttt{DOT} - po jego naciśnięciu do sekwencji sygnałów dodawany jest krótki sygnał (kropka),
+    \item Przycisk \texttt{DASH} - po jego naciśnięciu do sekwencji sygnałów dodawany jest długi sygnał (pauza, czyli myślnik),
+    \item Przycisk \texttt{ACCEPT} - po jego naciśnięciu, użytkownik zatwierdza sekwencję, która następnie zostaje odtworzona przy użyciu diody LED.
+\end{itemize}
+
+Program kończy działanie w sytuacji, gdy wciśnięty zostanie przycisk \texttt{ACCEPT}, a bieżąca sekwencja sygnałów będzie pusta.
+
+\subsection{Działanie wyświetlania}
+
+\begin{itemize}
+    \item Po zatwierdzeniu sekwencji, system iteruje po wprowadzonych sygnałach.
+    \item Dla kropki dioda zapala się na krótki czas ($400ms$).
+    \item Dla myślnika dioda zapala się na dłuższy czas ($800ms$).
+    \item Pomiędzy kolejnymi sygnałami następuje krótkie wyłączenie ($200ms$).
+\end{itemize}
+
+\section{Struktura pakietu \texttt{morse}}
+
+W celu utworzenia pakietu środowiska Buildroot utworzono w folderze \texttt{/package} nowy folder \texttt{/morse}. W folderze znalazły się pliki zgodnie ze strukturą przedstawioną na rysunku \ref{fig:tree}:
+
+\begin{figure}[H]
+    \dirtree{%
+    .1 /morse.
+    .2 src/.
+    .3 Makefile.
+    .3 morse.h.
+    .3 morse.c.
+    .3 main.c.
+    .2 morse.mk.
+    .2 Config.in.
+    }
+    \caption{Struktura plików w pakiecie}
+    \label{fig:tree}
+\end{figure}
+
+Plik \texttt{Config.in} zawiera informacje o nazwie pakietu, jego krótki opis oraz informację o tym, że zależy on od pakietu \texttt{c-periphery}. 
+
+Plik \texttt{morse.mk} określa w jaki sposób mają być pobierane źródła do pakietu oraz gdzie mają być umieszczane w docelowym systemie.
+
+W folderze \texttt{/src} znajduje się kod źródłowy pakietu wraz ze standardowym plikiem \texttt{Makefile}.
+
+Aby pakiet był widoczny z poziomu narzędzia \texttt{nconfig} w pliku \texttt{package/Config.in} należy dodać następujący wpis:
+
+\begin{verbatim}
+menu "LINSW custom packages"
+    source "package/morse/Config.in"
+endmenu
+\end{verbatim}
+
+który powoduje, że pakiet \texttt{morse} pojawia się w osobnym menu o nazwie \texttt{LINSW custom packages}.
+
+Zawartość plików pokazanych na rysunku \ref{fig:tree} została przesłana wraz ze sprawozdaniem.
+
+\section{Opis modyfikacji i konfiguracji Buildroota}
+
+\begin{enumerate}[label=\arabic*.]
+    \item Pobranie środowiska Buildroot, rozpakowanie oraz dokonanie wstępnej konfiguracji poprzez: \texttt{make raspberrypi4\_64\_defconfig}.
+    \item \texttt{System configuration > Run a getty (login prompt) after boot > TTY port} ustawione na \texttt{console}.
+    \item \texttt{Build options > Mirrors and Download locations > Primary download site} ustawione na \texttt{http://192.168.137.24/dl}.
+    \item \texttt{Toolchain > Toolchain type} ustawione na \texttt{External toolchain}.
+    \item \texttt{Build options > Enable compiler cache} zaznaczone i \texttt{Compiler cache location} ustawione na \texttt{/home/adam/linsw/ccache-br}.
+    \item \texttt{Filesystem images} zaznaczona opcja \texttt{initial RAM filesystem 
+linked into linux kernel} oraz \texttt{Compression method} ustawione na \texttt{gzip}.
+    \item W pliku \texttt{board/raspberrypi4-64/genimage.cfg.in} parametr \texttt{size} ustawiony na \texttt{128M}.
+    \item \texttt{System configuration > Enable root login and password > Root password} ustawione na przykładowe hasło \texttt{root,123}.
+    \item \texttt{System configuration > System banner} ustawione na \texttt{Welcome Adam Gracikowski}.
+    \item \texttt{System configuration > Root filesystem overlay directories} ustawione na \texttt{board/overlay}.
+    \item \texttt{Host utilities} zaznaczona opcja \texttt{host environment-setup}.
+    \item \texttt{LINSW custom packages} zaznaczona opcja \texttt{morse}.
+\end{enumerate}
+
+\section{Opis implementacji logiki aplikacji}
+
+Punktem startowym aplikacji jest funkcja \texttt{main} znajdująca się w pliku \texttt{main.c}. Inicjalizacja obiektów GPIO (diody oraz trzech przycisków) została zrealizowana przy pomocy funkcji \texttt{gpio\_new()}, \texttt{gpio\_open()} oraz w przypadku przycisków dodatkowo \texttt{gpio\_set\_edge()}, które ustawia nasłuchiwanie na zdarzenia określone flagą \texttt{GPIO\_EDGE\_FALLING}.
+
+Przechowywanie sekwencji sygnałów wprowadzonej przez użytkownika zostało zrealizowane przy pomocy prostej listy powiązanej, aby zapewnić nieograniczoną z góry długość sekwencji.
+
+Następnie program wchodzi w główną pętlę, w której oczekiwanie na zdarzenia przycisków zrealizowane zostało przy pomocy funkcji \texttt{gpio\_pool\_multiple()}. Funkcja ta przyjmuje jako parametry wywołania tablicę uchwytów do obiektów GPIO, długość tej tablicy, maksymalny czas oczekiwania na zdarzenie (w tym przypadku ustawiony na wartość $-1$, oznaczającą nieskończone oczekiwanie), a także tablicę typu \texttt{bool}, do której zostanie zapisana informacja, dla których przycisków wystąpiło zdarzenie.
+
+W dalszej części pętli wykonywana jest warunkowo logika odpowiedzi na wciśnięcie poszczególnych przycisków. 
+
+Ważnym elementem pętli jest wyjmowanie z kolejki zdarzeń przy pomocy \texttt{gpio\_read\_event()}. Po wywołaniu tej funkcji następuje sprawdzenie, czy rozważane zdarzenie nie jest przypadkiem efektem zjawiska drgania styków (ang. \textit{switch bounce}). Jeżeli zdarzenie wystąpiło zbyt szybko w porównaniu do ostatnio zarejestrowanego, to jest ono ignorowane. Sprawdzenie to odbywa się przy pomocy prostej funkcji \texttt{has\_miliseconds\_passed()} oraz tablicy \texttt{timestamps} typu \texttt{uint64\_t}, w której przechowywane są czasy ostatnio zarejestrowanych zdarzeń.
+
+Po wyjściu z pętli następuje sekcja \texttt{cleanup}, odpowiedzialna za zwalnianie oraz zamykanie zasobów GPIO, a także zwalnianie zaalokowanej pamięci.
 
 %----------------------------------------------------------------------
 % bibliografia:
 
 \begin{thebibliography}{9}
-\bibitem{Element bibliografii}
-Opis linku - https://www.link.pl, dostęp: \today
+\bibitem{embeddedinn} Adding Custom Packages to Buildroot - \textit{https://embeddedinn.com/articles/tutorial/Adding-Custom-Packages-to-Buildroot}, dostęp: \today
+\bibitem{buildroot} Adding New Packages to Buildroot - \textit{https://buildroot.org/downloads/manual/manual.html}, dostęp \today
 \end{thebibliography}
 %----------------------------------------------------------------------
 \end{document}
