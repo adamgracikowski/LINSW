@@ -121,7 +121,7 @@ void open_button(gpio_t **button, int pin, const char *path)
         exit(EXIT_FAILURE);
     }
 
-    if(gpio_open(*button, path, pin, GPIO_DIR_OUT) < 0){
+    if(gpio_open(*button, path, pin, GPIO_DIR_IN) < 0){
         fprintf(stderr, "gpio_open(): %s\n", gpio_errmsg(*button));
         gpio_free(*button);
         exit(EXIT_FAILURE);
@@ -132,4 +132,7 @@ void open_button(gpio_t **button, int pin, const char *path)
         close_free_button(button);
         exit(EXIT_FAILURE);
     }
+}
+bool has_miliseconds_passed(uint64_t start, uint64_t end, uint64_t miliseconds){
+    return (end - start) > (miliseconds * 1000000ULL);
 }
