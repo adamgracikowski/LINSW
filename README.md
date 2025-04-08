@@ -9,28 +9,45 @@ mkdir -p /malina/gracikowskia/ccache-br \
   && cd buildroot-2024.11.2
 ```
 
-```bash
-mkdir -p /home/adam/linsw/ccache-br \
-  && cd /home/adam/linsw \
-  && wget https://buildroot.org/downloads/buildroot-2024.11.2.tar.xz \
-  && tar -xJf buildroot-2024.11.2.tar.xz \
-  && cd buildroot-2024.11.2
-```
-
 Wstępna konfiguracja Buildroot-a:
 ```bash
 make raspberrypi4_64_defconfig \
   && make nconfig
 ```
 
-Wstępna konfiguracja pakietu `quiz`:
+Kompilacja aplikacji:
 ```bash
-mkdir -p package/quiz/src \
-  && cd package/quiz \
-  && touch Config.in \
-  && touch quiz.mk \
-  && touch src/quiz.c \
-  && touch src/quiz.h \
-  && touch src/Makefile \
-  && ls ./*
+cd /malina/gracikowskia/buildroot-2024.11.2/packages/morse/src \
+  && code .
+
+source /malina/gracikowskia/buildroot-2024.11.2/output/host/environment-setup
+
+rm *.o \
+  && rm morse \
+  && make
+```
+
+Uruchamianie serwera http:
+```bash
+ip a
+
+python3 -m http.server
+```
+
+Pobieranie aplikacji na urządzenie:
+```bash
+rm morse \
+  && wget 192.168.122.1:8000/morse \
+  && chmod +x morse \
+  && ./morse
+```
+
+Konfiguracja domowa:
+
+```bash
+mkdir -p /home/adam/linsw/ccache-br \
+  && cd /home/adam/linsw \
+  && wget https://buildroot.org/downloads/buildroot-2024.11.2.tar.xz \
+  && tar -xJf buildroot-2024.11.2.tar.xz \
+  && cd buildroot-2024.11.2
 ```
