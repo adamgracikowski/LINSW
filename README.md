@@ -34,6 +34,15 @@ ip a
 python3 -m http.server
 ```
 
+Minicom:
+```bash
+minicom -D /dev/ttyUSB0
+
+mount /dev/mmcblk0p1 /mnt \
+  && cd /mnt/user \
+  && ls -la
+```
+
 Pobieranie aplikacji na urządzenie:
 ```bash
 rm morse \
