@@ -68,7 +68,7 @@ Funkcjonalności przycisków są następujące:
     \item Przycisk \texttt{ACCEPT} - po jego naciśnięciu, użytkownik zatwierdza sekwencję, która następnie zostaje odtworzona przy użyciu diody LED.
 \end{itemize}
 
-Program kończy działanie w sytuacji, gdy wciśnięty zostanie przycisk \texttt{ACCEPT}, a bieżąca sekwencja sygnałów będzie pusta.
+Program kończy działanie po wyświetleniu całej wprowadzonej sekwencji sygnałów.
 
 \subsection{Działanie wyświetlania}
 
@@ -144,7 +144,7 @@ Następnie program wchodzi w główną pętlę, w której oczekiwanie na zdarzen
 
 W dalszej części pętli wykonywana jest warunkowo logika odpowiedzi na wciśnięcie poszczególnych przycisków. 
 
-Ważnym elementem pętli jest wyjmowanie z kolejki zdarzeń przy pomocy \texttt{gpio\_read\_event()}. Po wywołaniu tej funkcji następuje sprawdzenie, czy rozważane zdarzenie nie jest przypadkiem efektem zjawiska drgania styków (ang. \textit{switch bounce}). Jeżeli zdarzenie wystąpiło zbyt szybko w porównaniu do ostatnio zarejestrowanego, to jest ono ignorowane. Sprawdzenie to odbywa się przy pomocy prostej funkcji \texttt{has\_miliseconds\_passed()} oraz tablicy \texttt{timestamps} typu \texttt{uint64\_t}, w której przechowywane są czasy ostatnio zarejestrowanych zdarzeń.
+Ważnym elementem pętli jest wyjmowanie z kolejki zdarzeń przy pomocy \texttt{gpio\_read\_event()}. Po wywołaniu tej funkcji następuje sprawdzenie, czy rozważane zdarzenie nie jest przypadkiem efektem zjawiska drgania styków (ang. \textit{switch bounce}). Jeżeli zdarzenie wystąpiło zbyt szybko w porównaniu do ostatnio zarejestrowanego, to jest ono ignorowane. Sprawdzenie to odbywa się przy pomocy prostej funkcji \texttt{has\_miliseconds\_passed()} oraz tablicy \texttt{timestamps} typu \texttt{uint64\_t}, w której przechowywane są czasy ostatnio zarejestrowanych zdarzeń. Następuje również czyszczenie kolejki dla odpowiedniego przycisku przy pomocy funkcji \texttt{empty\_queue()}.
 
 Po wyjściu z pętli następuje sekcja \texttt{cleanup}, odpowiedzialna za zwalnianie oraz zamykanie zasobów GPIO, a także zwalnianie zaalokowanej pamięci.
 
