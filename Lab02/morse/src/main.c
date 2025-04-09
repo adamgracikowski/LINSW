@@ -1,32 +1,14 @@
 #include "morse.h"
+#include <unistd.h>
 
 int main()
 {
     MorseNode *morse_sequence_head = NULL, *morse_sequence_tail = NULL;
 
-    gpio_t *dot = NULL;
-    gpio_t *dash = NULL;
-    gpio_t *accept = NULL;
-    gpio_t *diode = NULL;
+    gpio_t *dot = NULL, *dash = NULL, *accept = NULL, *diode = NULL;
     
     fprintf(stderr,"Preparing DIODE...\n");
     open_diode(&diode);
-
-    /* Diode Tests */
-
-    // push_back_signal(&morse_sequence_head, &morse_sequence_tail, DOT);
-    // push_back_signal(&morse_sequence_head, &morse_sequence_tail, DOT);
-    // push_back_signal(&morse_sequence_head, &morse_sequence_tail, DOT);
-    // MorseNode *iterator = morse_sequence_head;
-    // display_morse_sequence(diode, iterator);
-    // clear_sequence(&morse_sequence_head, &morse_sequence_tail);
-    // push_back_signal(&morse_sequence_head, &morse_sequence_tail, DOT);
-    // push_back_signal(&morse_sequence_head, &morse_sequence_tail, DOT);
-    // push_back_signal(&morse_sequence_head, &morse_sequence_tail, DOT);
-    // iterator = morse_sequence_head;
-    // display_morse_sequence(diode, iterator);
-    // clear_sequence(&morse_sequence_head, &morse_sequence_tail);
-
     fprintf(stderr,"Preparing DOT button...\n");
     open_button(&dot, BUTTON_DOT_PIN, BUTTON_PATH);
     fprintf(stderr,"Preparing DASH button...\n");
@@ -68,67 +50,61 @@ int main()
 
         /* DOT */
         if(ready[BUTTON_DOT_INDEX]){
+            usleep(DEBOUNCE_DELAY_MICROSECONDS);
+
             if (gpio_read_event(buttons[BUTTON_DOT_INDEX], &edge, &timestamp) < 0) {
                 fprintf(stderr, "gpio_read_event(): %s\n", gpio_errmsg(buttons[BUTTON_DOT_INDEX]));
                 goto cleanup;
             }
 
-            if(has_miliseconds_passed(timestamps[BUTTON_DOT_INDEX], timestamp, DEBOUNCE_DELAY_MILISECONDS)){
+            if (edge == GPIO_EDGE_FALLING && 
+                has_miliseconds_passed(timestamps[BUTTON_DOT_INDEX], timestamp, DEBOUNCE_DELAY_MILISECONDS)){
                 fprintf(stderr, "DOT clicked.\n");
                 push_back_signal(&morse_sequence_head, &morse_sequence_tail, DOT);
             }
-            else {
-                fprintf(stderr, "DOT bounce.\n");
-            }
 
             timestamps[BUTTON_DOT_INDEX] = timestamp;
+
+            if(!empty_queue(&buttons[BUTTON_DOT_INDEX], &edge, &timestamps[BUTTON_DOT_INDEX])){
+                goto cleanup;
+            }
+
             ready[BUTTON_DOT_INDEX] = false;
         }
 
         /* DASH */
         if(ready[BUTTON_DASH_INDEX]){
+            usleep(DEBOUNCE_DELAY_MICROSECONDS);
+            
             if (gpio_read_event(buttons[BUTTON_DASH_INDEX], &edge, &timestamp) < 0) {
                 fprintf(stderr, "gpio_read_event(): %s\n", gpio_errmsg(buttons[BUTTON_DASH_INDEX]));
                 goto cleanup;
             }
 
-            if(has_miliseconds_passed(timestamps[BUTTON_DASH_INDEX], timestamp, DEBOUNCE_DELAY_MILISECONDS)){
+            if (edge == GPIO_EDGE_FALLING && 
+               has_miliseconds_passed(timestamps[BUTTON_DASH_INDEX], timestamp, DEBOUNCE_DELAY_MILISECONDS)){
                 fprintf(stderr, "DASH clicked.\n");
                 push_back_signal(&morse_sequence_head, &morse_sequence_tail, DASH);
             }
-            else {
-                fprintf(stderr, "DASH bounce.\n");
-            }
 
             timestamps[BUTTON_DASH_INDEX] = timestamp;
+
+            if(!empty_queue(&buttons[BUTTON_DASH_INDEX], &edge, &timestamps[BUTTON_DASH_INDEX])){
+                goto cleanup;
+            }
+
             ready[BUTTON_DASH_INDEX] = false;
         }
 
         /* ACCEPT */
         if(ready[BUTTON_ACCEPT_INDEX]){
-            if (gpio_read_event(buttons[BUTTON_ACCEPT_INDEX], &edge, &timestamp) < 0) {
-                fprintf(stderr, "gpio_read_event(): %s\n", gpio_errmsg(buttons[BUTTON_ACCEPT_INDEX]));
-                goto cleanup;
-            }
+            fprintf(stderr, "ACCEPT clicked.\n");
 
-            if(has_miliseconds_passed(timestamps[BUTTON_ACCEPT_INDEX], timestamp, DEBOUNCE_DELAY_MILISECONDS)){
-                fprintf(stderr, "ACCEPT clicked.\n");
-                
-                if(morse_sequence_head == NULL){
-                    printf("Stop conditions satisfied, finishing execution...\n");
-                    goto cleanup;
-                }
+            MorseNode *iterator = morse_sequence_head;
+            display_morse_sequence(diode, iterator);
+            clear_sequence(&morse_sequence_head, &morse_sequence_tail);
 
-                MorseNode *iterator = morse_sequence_head;
-                display_morse_sequence(diode, iterator);
-                clear_sequence(&morse_sequence_head, &morse_sequence_tail);
-            }
-            else {
-                fprintf(stderr, "ACCEPT bounce.\n");
-            }
-
-            timestamps[BUTTON_ACCEPT_INDEX] = timestamp;
-            ready[BUTTON_ACCEPT_INDEX] = false;
+            goto cleanup;
         }
     }
 cleanup:

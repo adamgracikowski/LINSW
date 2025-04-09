@@ -136,3 +136,16 @@ void open_button(gpio_t **button, int pin, const char *path)
 bool has_miliseconds_passed(uint64_t start, uint64_t end, uint64_t miliseconds){
     return (end - start) > (miliseconds * 1000000ULL);
 }
+bool empty_queue(gpio_t **button, gpio_edge_t *edge, uint64_t *button_timestamp) {
+    uint64_t timestamp = 0;
+
+    while(gpio_poll(*button, DEBOUNCE_DELAY_MILISECONDS) > 0){
+        if (gpio_read_event(*button, edge, &timestamp) < 0) {
+            fprintf(stderr, "gpio_read_event(): %s\n", gpio_errmsg(*button));
+            return false;
+        }
+        *button_timestamp = timestamp;
+        fprintf(stderr, "Bounce...\n");
+        return true;
+    }
+}
