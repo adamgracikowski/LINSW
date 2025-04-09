@@ -42,7 +42,7 @@ void display_morse_sequence(gpio_t *diode, MorseNode *iterator);
 #define BUTTON_DOT_PIN 12                /* May require some adjustments */
 #define BUTTON_DASH_PIN 13               /* May require some adjustments */
 #define BUTTON_ACCEPT_PIN 14             /* May require some adjustments */
-#define BUTTON_PATH "/dev/gpiochip0"    /* Should not require any adjustments */
+#define BUTTON_PATH "/dev/gpiochip0"     /* Should not require any adjustments */
 #define MULTIPLE_POOL_TIMEOUT -1
 #define BUTTON_DOT_INDEX 0
 #define BUTTON_DASH_INDEX 1
