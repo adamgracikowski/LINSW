@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login Failed</title>
+  <style>
+    /* Reset & box sizing */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Full‐viewport centered layout */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #333;
+    }
+
+    /* Card container */
+    .message-container {
+      background-color: #fff;
+      padding: 2rem 3rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      text-align: center;
+    }
+
+    /* Heading */
+    h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #d9534f; /* a soft red to indicate error */
+    }
+
+    /* Paragraph */
+    p {
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      color: #555;
+    }
+
+    /* Styled retry link as button */
+    .retry-link {
+      display: inline-block;
+      padding: 0.65rem 1.25rem;
+      background-color: #007bff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+
+    .retry-link:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="message-container">
+    <h3>Login Failed…</h3>
+    <p>Invalid username or password.</p>
+    <a href="/login" class="retry-link">Try Again</a>
+  </div>
+</body>
+</html>

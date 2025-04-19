@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>File Tree</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4f8;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+
+    .header {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1.5rem;
+    }
+    .logout-button {
+      background-color: #007bff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .logout-button a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .logout-button:hover {
+      background-color: #0056b3;
+    }
+
+    .file-tree {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+
+    .tree-list,
+    .tree-list ul {
+      list-style: none;
+      padding-left: 1.5rem;
+      margin: 0.5rem 0;
+    }
+
+    .tree-list li {
+      margin: 0.25rem 0;
+    }
+
+    /* ==== FOLDERS ==== */
+    .tree-list li:has(ul) {
+      display: block;
+      position: relative;
+      margin-left: 0.5rem;
+    }
+
+    .tree-list li:has(ul) > .folder-header {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .tree-folder-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-right: 0.3rem;
+      user-select: none;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .tree-list li.collapsed > ul {
+      display: none;
+    }
+
+    .tree-list li.collapsed .tree-folder-toggle::after {
+      content: '▶';
+    }
+
+    .tree-list li:not(.collapsed) .tree-folder-toggle::after {
+      content: '▼';
+    }
+
+    .folder-header .folder-icon {
+      margin-right: 0.5rem;
+    }
+
+    /* ==== FILES ==== */
+    .tree-list li:not(:has(ul)) {
+      display: flex;
+      align-items: center;
+    }
+
+    .tree-list li:not(:has(ul)):before {
+      content: '📄';
+      margin-right: 0.5rem;
+    }
+
+    .tree-list a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .tree-list a:hover {
+      text-decoration: underline;
+    }
+
+    /* ==== UPLOAD SECTION ==== */
+    .upload-container {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .upload-container h3 {
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+      color: #333;
+    }
+    .upload-form .form-group {
+      margin-bottom: 1rem;
+    }
+    .upload-form input[type="file"] {
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .upload-form input[type="submit"] {
+      background-color: #007bff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .upload-form input[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <button class="logout-button"><a href="/logout">Logout</a></button>
+    </header>
+
+    <section class="file-tree">
+      <ul class="tree-list">
+        {% module items(children=tree['children']) %}
+      </ul>
+    </section>
+
+    <section class="upload-container">
+      <h3>Upload File (to root directory)</h3>
+      <form action="/upload"
+            method="post"
+            enctype="multipart/form-data"
+            class="upload-form">
+        <div class="form-group">
+          <input type="file" name="file" required />
+        </div>
+        <input type="submit" value="Upload" />
+      </form>
+    </section>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".tree-folder-toggle").forEach(button => {
+        button.addEventListener("click", () => {
+          const folderLi = button.closest("li");
+          folderLi.classList.toggle("collapsed");
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+fdt addr ${fdt_addr}
+fdt get value bootargs_orig /chosen bootargs
+mmc dev 0
+gpio clear 22
+gpio set 23
+sleep 1
+if gpio input 18 ; then
+	gpio clear 23
+	gpio set 27
+	fatload mmc 0:1 ${kernel_addr_r} /user/Image.admin
+	setenv bootargs "${bootargs_orig} console=ttyAMA0"
+	booti ${kernel_addr_r} - ${fdt_addr}
+else
+	gpio clear 23
+	gpio set 22
+	fatload mmc 0:1 ${kernel_addr_r} /user/Image.user
+	setenv bootargs "${bootargs_orig} console=ttyAMA0"
+	booti ${kernel_addr_r} - ${fdt_addr}
+fi
