@@ -36,11 +36,10 @@ async def main():
     # os.makedirs(FILE_DIRECTORY, exist_ok=True)
 
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8888
-    # address = sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1"
+    address = sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1"
 
     app = make_app()
-    # app.listen(port=port, address=address)
-    app.listen(port=port)
+    app.listen(port=port, address=address)
 
     print(f"Server is running on http://{address}:{port}")
 
