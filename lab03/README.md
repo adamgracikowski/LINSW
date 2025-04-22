@@ -44,6 +44,12 @@ mkimage -T script -C none -n 'Start script' -d boot.txt boot.scr
 
 Skopiowanie pliku `.config` dla systemu `User`:
 ```bash
+# dodanie overlay do systemu
+# nadanie skryptom prawa do wykonywania
+
+chmod +x ./S98mount \
+  && chmod +x ./S99server
+
 mv Image Image.user \
   && ls -la \
   && ip a \
