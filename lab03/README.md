@@ -29,38 +29,23 @@ mv Image Image.admin \
   && ls -la \
   && ip a \
   && python3 -m http.server
-
-
-mv Image Image.user \
-  && ls -la \
-  && ip a \
-  && python3 -m http.server
 ```
 
-Uruchamianie serwera http:
-```bash
-ip a
-
-python3 -m http.server
-```
-
-Minicom:
+Uruchomienie Minicom:
 ```bash
 minicom -D /dev/ttyUSB0
 
 mount /dev/mmcblk0p1 /mnt \
   && cd /mnt/user \
   && ls -la
+
+mkimage -T script -C none -n 'Start script' -d boot.txt boot.scr
 ```
 
+Skopiowanie pliku `.config` dla systemu `User`:
 ```bash
-```
-
-```bash
-```
-
-```bash
-```
-
-```bash
+mv Image Image.user \
+  && ls -la \
+  && ip a \
+  && python3 -m http.server
 ```
