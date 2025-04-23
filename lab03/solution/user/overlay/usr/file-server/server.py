@@ -14,7 +14,8 @@ from routes import Routes
 
 BASE = os.path.dirname(__file__)
 TEMPLATES = os.path.join(BASE, "templates")
-FILE_DIRECTORY = os.path.join(BASE, "files") # '/mnt' in the future
+# FILE_DIRECTORY = os.path.join(BASE, "files") # home version
+FILE_DIRECTORY = "/mnt" # lab version
 
 def make_app():
     return tornado.web.Application(
@@ -33,10 +34,8 @@ def make_app():
     )
 
 async def main():
-    # os.makedirs(FILE_DIRECTORY, exist_ok=True)
-
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8888
-    address = sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1"
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8888 # default port
+    address = sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1" # default address
 
     app = make_app()
     app.listen(port=port, address=address)

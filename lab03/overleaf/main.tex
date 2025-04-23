@@ -148,13 +148,13 @@ Rysunek \ref{fig:tree-overlay} przedstawia strukturę plików dodanych w ramach 
 
 Folder \texttt{file-server} zostanie omówiony w rozdziale \ref{implementacja-www}. Najważniejszym jego elementem jest jednak plik \texttt{server.py}, zaznaczony na rysunku \ref{fig:tree-overlay}, do którego odwołuje się skrypt \texttt{S99server}. 
 
-Skrypt ten jest odpowiedzialny za zarządzanie uruchamianiem, zatrzymywaniem i monitorowaniem działania demona (w naszym przypadku serwera opartego na \texttt{Tornado}).
+Skrypt ten jest odpowiedzialny za zarządzanie uruchamianiem i zatrzymywaniem serwera (w naszym przypadku serwera opartego na \texttt{Tornado}).
 
-Skrypt rozpoczyna się od ustawienie zmiennych określających m.in. katalog, w którym znajduje się skrypt serwera, ścieżka do skrypu \texttt{server.py} oraz argumenty jego wywołania. Do zatrzymywania procesu został wybrany sygnał \texttt{SIGINT}.
+Skrypt \texttt{S98mount} montuje trzecią partycję z urządzenia \texttt{mmcblk0p3} do katalogu \texttt{/mnt} przy pomocy \texttt{mount}:
 
-Skrypt \texttt{S99server} zawiera funkcje pomocnicze \texttt{do\_start()}, \texttt{do\_stop()} oraz \texttt{do\_status()}, przy pomocy których odpowiednio proces uruchamiany jest w tle, proces jest zatrzymywany i wysyłany jest do niego sygnał przerwania oraz sprawdzany i wypisywany jest jego status.
-
-Skrypt \texttt{S98mount} montuje trzecią partycję z urządzenia \texttt{mmcblk0} do katalogu \texttt{/mnt}.
+\begin{verbatim}
+mount /dev/mmcblk0p3 /mnt
+\end{verbatim}
 
 \subsection{Logika Bootloader-a}
 
@@ -195,7 +195,7 @@ Implementacja logiki serwera WWW została umieszczona w projekcie \texttt{file-s
 
 Główny skrypt uruchamiany podczas startu systemu to \texttt{server.py}. Przyjmuje on dwa pozycyjne argumenty - \texttt{port} o domyślnej wartości \texttt{8888} oraz \texttt{address} o domyślnej wartości \texttt{127.0.0.1}.
 
-Funkcja \texttt{make\_app()} jest odpowiedzialna za stworzenie i konfigurację obiektu \texttt{tornado.web.Application}. Funkcja \texttt{main()} jest natomiast odpowiedzialna za uruchomienie serwera oraz ustawienie obsługi sygnału \texttt{SIGINT} oraz \texttt{SIGTERM} w celu ładnego zakończenia działania serwera w przypadku nadejścia sygnału.
+Funkcja \texttt{make\_app()} jest odpowiedzialna za stworzenie i konfigurację obiektu \texttt{Application} z modułu \texttt{tornado.web}. Funkcja \texttt{main()} jest natomiast odpowiedzialna za uruchomienie serwera oraz ustawienie obsługi sygnału \texttt{SIGINT} oraz \texttt{SIGTERM} w celu ładnego zakończenia działania serwera w przypadku nadejścia sygnału.
 
 W pliku \texttt{routes.py} znajdują się stałe określające obsługiwane ścieżki API serwera (klasa \texttt{Routes}).
 
@@ -204,6 +204,64 @@ W pliku \texttt{file\_tree.py} znajduje się funkcja \texttt{build\_file\_tree()
 W folderze \texttt{handlers} znajdują się implementacja odpowiednio logiki prostej autoryzacji użytkownika oraz operacji na plikach.
 
 Zawartość wszystkich plików wymienionych na rysunku \ref{fig:tree} została udostępniona wraz ze sprawozdaniem.
+
+\section{Uruchamianie}
+
+Po skonfigurowaniu obrazu systemu \texttt{Admin}, został on wygenerowany przy pomocy polecenia \texttt{make}. Następnie na kartę SD przesłane zostały pliki \texttt{u-boot.bin} oraz \texttt{Image} z podfolderu \texttt{output/images} głównego katologu Buildroot'a. Nazwy tych plików zostały zmienione odpowiednio na \texttt{Image} oraz \texttt{Image.admin}.
+
+Aby uruchomić system \texttt{Admin} należało uruchomić polecenie \texttt{reboot}, a następnie wywołać ręcznie z konsoli odpowiednie linie z pliku \texttt{boot.txt}, prowadzące do załadowania obrazu \texttt{Image.admin}.
+
+Kolejnym krokiem było pobranie na kartę SD przygotowanego wcześniej pliku \texttt{boot.txt} i zmodyfikowanie go przy pomocy polecenia:
+
+\begin{verbatim}
+mkimage -T script -C none -n 'Start script' -d boot.txt boot.scr
+\end{verbatim}
+
+Plik \texttt{boot.scr} został następnie umieszczony w katalogu głównym pierwszej partycji.
+
+Po skonfigurowaniu obrazu systemu \texttt{User}, został on wygenerowany przy pomocy polecenia \texttt{make}. Następnie na kartę SD przesłane zostały pliki \texttt{Image} oraz \texttt{rootfs.ext2} z podfolderu \texttt{output/images} głównego katologu Buildroot'a.
+
+Nazwa pliku z obrazem systemu \texttt{User} została zmieniona na \texttt{Image.user}.
+
+Kolejnym krokiem było stworzenie i sformatowanie partycji zgodnie z wymaganiami. Stworzenie partycji zrealizowano przy pomocy interaktywnego narzędzia \texttt{fdisk}:
+
+\begin{verbatim}
+fdisk /dev/mmcblk0
+D
+3
+D
+2
+N
+P
+2
+<enter>
++500M
+N
+P
+3
+<enter>
++500M
+W
+\end{verbatim}
+
+Partycje zostały następnie sformatowane:
+
+\begin{verbatim}
+mkfs.ext4 /dev/mmcblk0p2
+mkfs.ext4 /dev/mmcblk0p3
+\end{verbatim}
+
+dane przeniesione:
+
+\begin{verbatim}
+dd of=/dev/mmcblk0p2 if=rootfs.ext2 bs=4096
+\end{verbatim}
+
+a rozmiar dopasowany:
+
+\begin{verbatim}
+resize2fs /dev/mmcblk0p2
+\end{verbatim}
 
 %----------------------------------------------------------------------
 % bibliografia:

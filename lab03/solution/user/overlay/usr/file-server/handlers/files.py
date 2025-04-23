@@ -5,7 +5,8 @@ from routes import Routes, Templates
 from .base import BaseHandler
 
 BASE = os.path.dirname(__file__)
-FILE_DIRECTORY = os.path.abspath(os.path.join(BASE, "..", "files"))
+# FILE_DIRECTORY = os.path.join(BASE, "files") # home version
+FILE_DIRECTORY = "/mnt" # lab version
 
 class FileListHandler(BaseHandler):
     @tornado.web.authenticated
