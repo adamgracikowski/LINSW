@@ -1,0 +1,15 @@
+#!/bin/sh
+
+case "$1" in
+    start)
+        echo ">> Mounting third partition..."
+        mount /dev/mmcblk0p3 /mnt
+        ;;
+    *)
+        echo "Usage: $0 {start}"
+        exit 1
+        ;;
+esac
+
+exit 0
+ 
