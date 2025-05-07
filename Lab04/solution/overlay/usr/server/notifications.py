@@ -8,7 +8,7 @@ class EmailNotifier:
         smtp_server: str = "smtp.gmail.com",
         smtp_port: int = 465,
         username: str = "linsw.mini",
-        password: str = "erxeygtzeuthazhc ",
+        password: str = "<your-app-password-here>",
         sender: str = "linsw.mini@gmail.com"
     ):
         self.smtp_server = smtp_server

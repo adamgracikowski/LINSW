@@ -1,8 +1,10 @@
 import asyncio
 from abc import ABC, abstractmethod
 from typing import Optional, Dict
+import time
+from functools import partial
 
-# import RPi.GPIO as GPIO
+import pigpio
 
 from enums import ProductCategory, DiodeColors
 
@@ -63,56 +65,78 @@ class GPIOModule(HardwareModule):
         diode_pins: Dict[DiodeColors, int],
         bounce_time: float = 0.05
     ):
-        # GPIO.setmode(GPIO.BCM)
-        # GPIO.setwarnings(False)
+        # Initialize pigpio and connect to daemon
+        self.pi = pigpio.pi()
+        if not self.pi.connected:
+            raise RuntimeError("Could not connect to pigpio daemon")
 
-        # self._queue: asyncio.Queue[ProductCategory] = asyncio.Queue()
-        # self._loop = asyncio.get_event_loop()
+        # Asyncio queue for GPIO events
+        self._queue: asyncio.Queue[ProductCategory] = asyncio.Queue()
+        self._callbacks = []
 
-        # self._input_pins = []
-        # for category, pin in progress_pins.items():
-        #     self._setup_input(pin, category, bounce_time)
+        # Configure GPIO inputs with pull-up and debounce
+        # For pigpio, setting the mode implies pull-up/down configuration
+        for category, pin in progress_pins.items():
+            self.pi.set_mode(pin, pigpio.INPUT)
+            self.pi.set_pull_up_down(pin, pigpio.PUD_UP)
+            self.pi.set_glitch_filter(pin, int(bounce_time * 1_000_000))
+            # Register a callback that debounces in handler
+            cb = self.pi.callback(
+                pin,
+                pigpio.FALLING_EDGE,
+                partial(self._on_button_event, category)
+            )
+            self._callbacks.append(cb)
 
-        # self._setup_input(failure_pin, ProductCategory.F, bounce_time)
+        # Failure button setup
+        self.pi.set_mode(failure_pin, pigpio.INPUT)
+        self.pi.set_pull_up_down(failure_pin, pigpio.PUD_UP)
+        self.pi.set_glitch_filter(failure_pin, int(bounce_time * 1_000_000))
+        cb_fail = self.pi.callback(
+            failure_pin,
+            pigpio.FALLING_EDGE,
+            partial(self._on_button_event, ProductCategory.F)
+        )
+        self._callbacks.append(cb_fail)
 
-        # self._led_pins = diode_pins
-        # for pin in diode_pins.values():
-        #     GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
-        pass
+        # Configure GPIO outputs for LEDs
+        for pin in diode_pins.values():
+            self.pi.set_mode(pin, pigpio.OUTPUT)
+            self.pi.write(pin, 0)
+        self._led_pins = diode_pins
 
-    def _setup_input(self, pin: int, category: ProductCategory, bounce: float):
-        # GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        # self._input_pins.append(pin)
-        # GPIO.add_event_detect(
-        #     pin,
-        #     GPIO.FALLING,
-        #     callback=lambda channel, cat=category: self._handle_press(cat),
-        #     bouncetime=int(bounce * 1000)
-        # )
-        pass
-
-    def _handle_press(self, category: ProductCategory):
-        self._loop.call_soon_threadsafe(self._queue.put_nowait, category)
+    def _on_button_event(self, category: ProductCategory, gpio: int, level: int, tick):
+        # Simple debounce: confirm button still pressed after short delay
+        time.sleep(0.05)
+        if self.pi.read(gpio) != 0:
+            # Button released or bounce
+            return
+        # Log and enqueue
+        print(f"[BUTTON] Press detected on pin {gpio} for category {category.value}", flush=True)
+        self._queue.put_nowait(category)
 
     async def detect_progress_category(self) -> Optional[ProductCategory]:
+        # Await next GPIO event
         return await self._queue.get()
 
     def set_diode_state(self, color: DiodeColors, on: bool):
-        # pin = self._led_pins.get(color)
-        # if pin is None:
-        #     return
-        # GPIO.output(pin, GPIO.HIGH if on else GPIO.LOW)
+        pin = self._led_pins.get(color)
+        if pin is None:
+            return
+        # Turn LED on or off
+        self.pi.write(pin, 1 if on else 0)
         print(f"[DIODE] {color.value.upper()} set to {'ON' if on else 'OFF'}.", flush=True)
 
     def turn_off_all_diodes(self):
-        # for pin in self._led_pins.values():
-        #     GPIO.output(pin, GPIO.LOW)
+        for pin in self._led_pins.values():
+            self.pi.write(pin, 0)
         print("[DIODE] All LEDs turned OFF.", flush=True)
 
     def dispose(self):
-        # for pin in self._input_pins:
-        #     GPIO.remove_event_detect(pin)
-        # for pin in self._led_pins.values():
-        #     GPIO.output(pin, GPIO.LOW)
-        # GPIO.cleanup()
-        print("GPIO resources disposed.")
+        # Cancel all callbacks and cleanup
+        for cb in self._callbacks:
+            cb.cancel()
+        for pin in self._led_pins.values():
+            self.pi.write(pin, 0)
+        self.pi.stop()
+        print("Pigpio resources disposed.")

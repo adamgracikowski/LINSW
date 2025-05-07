@@ -1,0 +1,221 @@
+\documentclass{article}
+%----------------------------------------------------------------------
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{siunitx}
+\usepackage{enumitem}
+\usepackage{dirtree}
+\usepackage{verbatim}
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+
+%----------------------------------------------------------------------
+% strona tytułowa:
+
+\begin{document}
+\begin{titlepage}
+    \centering
+    \vfill    
+    {\fontsize{40}{20}\selectfont \textbf{Linux w systemach wbudowanych} \par}
+    \vspace{2cm}
+    {\fontsize{30}{20}\selectfont Laboratorium L4 G1\par}
+    \vspace{2cm}
+    {\fontsize{20}{20}\selectfont Sprawozdanie\par}
+    \vfill
+    {\fontsize{10}{20}\selectfont Adam Grącikowski, 327350\par}
+    \vspace{1cm}
+    Warszawa, \today
+\end{titlepage}
+
+
+%----------------------------------------------------------------------
+% spis treści:
+
+\tableofcontents
+\newpage
+%----------------------------------------------------------------------
+\section{Cel ćwiczenia laboratoryjnego}
+
+ Celem ćwiczenia jest zrealizowanie z wykorzystaniem płytki Raspberry Pi 4 z płytką rozszerzającą (i ewentulanie innego modułu I/O) urządzenia wyposażonego w złożony interfejs użytkownika.
+
+\section{Wymagania}
+
+\begin{itemize}
+    \item Przyciski i diody LED powinny być użyte do  podstawowej obsługi urządzenia.
+    \item Interfejs WWW lub inny interfejs sieciowy powinien być użyty do bardziej zaawansowanych funkcji.
+\end{itemize}
+
+\section{Opis projektu i przyjętych założeń}
+
+\subsection{System Kolejkowania Zleceń Produkcyjnych}
+
+System składa się z dwóch modułów:
+
+\begin{itemize}
+    \item Webowego interfejsu planisty,
+    \item Hardware'owego modułu pracownika linii produkcyjnej.
+\end{itemize}
+
+W przyjętym modelu każde zamówienie tworzone przez planistę składa się z nazwy oraz określonej liczby sztuk trzech rodzajów elementów (produktów):
+
+\begin{itemize}
+    \item Kategorii A,
+    \item Kategorii B,
+    \item Kategorii C.
+\end{itemize}
+
+\subsection{Webowy interfejs planisty}
+
+\begin{itemize}
+    \item Dostępny tylko po zalogowaniu.
+    \item Pozwala wyświetlić listy zamówień z podziałem na ich aktualny stan:
+    \begin{itemize}
+        \item W oczekiwaniu na realizację (\texttt{pending}),
+        \item W trakcie realizacji (\texttt{in\_progress}),
+        \item Ukończone (\texttt{completed}).
+    \end{itemize}
+    \item Umożliwia dodawanie nowych zamówień, które są dodawane do kolejki zamówień oczekujących.
+    \item Wyświetla postęp realizacji aktualnie montowanego zamówienia.
+    \item Pozwala zresetować linię produkcyjną w przypadku zgłoszenia awarii przez pracownika realizującego zamówienie.
+    \item Po zresetowaniu linii produkcyjnej wznawiane jest zamówienie realizowane przed występnieniem awarii.
+\end{itemize}
+
+\subsection{Moduł pracownika linii produkcyjnej}
+
+\begin{itemize}
+    \item Po uruchomieniu łączy się z serwerem i pobiera z kolejki nowe zamówienie.
+    \item W trakcie realizacji zamówienia świeci się zielona dioda.
+    \item Pracownik ma dostęp do następujących przycisków:
+    \begin{itemize}
+        \item Zmontowano element kategorii A,
+        \item Zmontowano element kategorii B,
+        \item Zmontowano element kategorii C,
+        \item Awaria na linii produkcyjnej.
+    \end{itemize}
+    \item Wciśnięcie przycisku o zmontowaniu elementu powoduję aktualizację progresu zamówienia w interfejsie webowym planisty.
+    \item Po zrealizowaniu zamówienia z kolejki pobierane jest następne zamówienie.
+    \item W przypadku braku dostępnych zamówień świeci się żółta dioda.
+    \item Po wciśnięciu przycisku awarii zapala się czerwona dioda, odświeża się interfejs webowy oraz jest wysyłane powiadomienie mailowe do planisty, z informacją o wystąpieniu awarii.
+\end{itemize}
+
+\section{Opis struktury projektu oraz implementacji}
+\label{implementacja-www}
+
+Rysunek \ref{fig:tree} przedstawia strukturę folderów i plików w projekcie \texttt{server} dołączonym do archiwum. Najważniejszymi elementami projektu są pliki \texttt{server.py} oraz \texttt{client.py}, które odpowiedzialne są odpowiednio za działanie serwera i klienta (pracownika linii produkcyjnej).
+
+\begin{figure}[H]
+    \dirtree{%
+    .1 /server.
+    .2 templates/.
+    .3 index.html.
+    .3 login.html.
+    .3 login\_failed.html.
+    .2 handlers/.
+    .3 base.py.
+    .3 auth.py.
+    .3 \_\_init\_\_.py.
+    .2 /logs.
+    .3 events.log.
+    .2 config.py.
+    .2 models.py.
+    .2 enums.py.
+    .2 dtos.py.
+    .2 notifications.py.
+    .2 messages.py.
+    .2 hardware.py.
+    .2 storage.py.
+    .2 orders.json.
+    .2 routes.py.
+    .2 server.py.
+    .2 client.py.
+    }
+    \caption{Struktura plików w projekcie \texttt{server}}
+    \label{fig:tree}
+\end{figure}
+
+Folder \texttt{templates} zawiera sparametryzowane szablony \texttt{.html}, które serwer \href{https://www.tornadoweb.org/en/stable/}{Tornado}, zaimplementowany w języku \href{https://www.python.org/}{Python} przesyła użytkownikowi końcowemu. W folderze \texttt{handlers} znajduje się klasa bazowa dla wszystkich handler-ów oraz logika odpowiedzialna za logowanie użytkowników.
+
+W pliku \texttt{config.py} umieszczone zostały stałe dla całego projektu, czyli m.in. numery pinów dla diód i przycisków, a także domyślne wartości adresu i portu serwera.
+
+Do dwukierunkowej komunikacji pomiędzy serwerem oraz użytkownikiem interfejsu webowego, a także komunikacji pomiędzy serwerem i pracownikiem linii produkcyjnej, wykorzystano gniazda sieciowe (ang. \textit{websockets}).
+
+Powiadomienia mailowe zostały zrealizowane w pliku \texttt{notifications.py} przy pomocy wbudowanych funkcjonalności języka Python, nie wymagających konfiguracji żadnych zależności zewnętrznych.
+
+W pliku \texttt{hardware.py} znajduje się implementacja logiki odpowiedzialnej za inicjalizację, przetwarzanie i zwalnianie zasobów związanych z GPIO (diód i przycisków). Plik ten zawiera abstrakcyjną klasę \texttt{HardwareModule} oraz jej dwie implementacje:
+
+\begin{itemize}
+    \item \texttt{KeyboardModule}, która służyła do testowania (ang. \textit{mockowania}) rzeczywistego GPIO przy pomocy wczytywania i wypisywania informacji w konsoli.
+    \item \texttt{GPIOModule}, która realizuje komunikację z rzeczywistym GPIO przy pomocy biblioteki \href{https://github.com/joan2937/pigpio}{pigpio}.
+\end{itemize}
+
+Aby uruchomić wersję skryptu \texttt{client.py}, używającą implementacji \texttt{GPIOModule} należy podać argument pozycyjny \texttt{"gpio"}, w następujący sposób:
+
+\begin{verbatim}
+./client.py gpio
+\end{verbatim}
+
+W każdym innym przypadku zostanie uruchomiona wersja wykorzystująca \texttt{KeyboardModule}. Skrypt \texttt{server.py} przyjmuje natomiast dwa opcjonalne argumenty pozycyjne - \texttt{port} oraz \texttt{address}. W przypadku braku argumentów, ustawione zostaną wartości domyślne określone w pliku \texttt{config.py}. 
+
+\section{Opis modyfikacji i konfiguracji Buildroota}
+
+\begin{enumerate}[label=\arabic*.]
+    \item Pobranie środowiska Buildroot, rozpakowanie oraz dokonanie wstępnej konfiguracji poprzez: \texttt{make raspberrypi4\_64\_defconfig}.
+    \item \texttt{System configuration > Run a getty (login prompt) after boot > TTY port} ustawione na \texttt{console}.
+    \item \texttt{Build options > Mirrors and Download locations > Primary download site} ustawione na \texttt{http://192.168.137.24/dl}.
+    \item \texttt{Toolchain > Toolchain type} ustawione na \texttt{External toolchain}.
+    \item \texttt{Build options > Enable compiler cache} zaznaczone i \texttt{Compiler cache location} ustawione na \texttt{/malina/gracikowskia/ccache-br}.
+    \item \texttt{Filesystem images} zaznaczona opcja \texttt{initial RAM filesystem linked into linux kernel} oraz \texttt{Compression method} ustawione na \texttt{gzip}.
+    \item \texttt{System configuration > Enable root login and password > Root password} ustawione na przykładowe hasło \texttt{root,123}.
+    \item \texttt{System configuration > System banner} ustawione na \texttt{Welcome to Production Line System}.
+    \item W pliku \texttt{board/raspberrypi4-64/genimage.cfg.in} parametr \texttt{size} ustawiony na \texttt{256M}.
+    \item \texttt{System configuration > Root filesystem overlay directories} ustawione na \texttt{board/overlay}.
+    \item \texttt{Target packages > Networking applications} zaznaczona opcja \texttt{dhcp (ISC)} oraz \texttt{dhcp client}, a także \texttt{netplug}, \texttt{ntp} i \texttt{ntpd}.
+    \item \texttt{Target packages > Interpreter languages and scripting} zaznaczona opcja \texttt{python3} oraz w \texttt{External python modules} zaznaczone opcje \texttt{python-tornado}, \texttt{python-websocket-client}, \texttt{python-websockets}, \texttt{python-pigpio} oraz \texttt{python-pyopenssl}.
+    \item \texttt{Target packagex > Hardware handling} zaznaczona opcja \texttt{pigpio} (w celu automatycznego uruchamiania daemona).
+    \item \texttt{Target packages > Libraries > Crypto} zaznaczona opcja \texttt{CA Certificates}.
+\end{enumerate}
+
+\section{Opis plików konfiguracyjnych i skryptów dołączonych do archiwum}
+
+\subsection{\textit{Overlay} na wygenerowany obraz systemu}
+
+Rysunek \ref{fig:tree-overlay} przedstawia strukturę plików dodanych w ramach nakładki (ang. \textit{overlay}) na wygenerowany obraz systemu.
+
+\begin{figure}[H]
+    \dirtree{%
+    .1 /board.
+    .2 overlay/.
+    .3 usr/.
+    .4 server/.
+    .5 ....
+    .5 server.py.
+    .5 client.py.
+    .3 etc/.
+    .4 init.d/.
+    .5 S99server.
+    }
+    \caption{Struktura plików nakładce \texttt{overlay}}
+    \label{fig:tree-overlay}
+\end{figure}
+
+Folder \texttt{server} zostanie omówiony w rozdziale \ref{implementacja-www}. Najważniejszym jego elementami są jednak pliki \texttt{server.py}, zaznaczony na rysunku \ref{fig:tree-overlay}, do którego odwołuje się skrypt \texttt{S99server} oraz \texttt{client.py}, uruchamiany ręcznie po zalogowaniu do systemu. 
+
+Skrypt \texttt{S99server} jest odpowiedzialny za zarządzanie uruchamianiem i zatrzymywaniem serwera.
+
+%----------------------------------------------------------------------
+% bibliografia:
+
+\begin{thebibliography}{9}
+\bibitem{lecture} dr hab. inż. Wojciech Zabołotny, prezentacja do \textit{Wykładu 6.}
+\bibitem{tornado} Biblioteka \texttt{Tornado} - \textit{https://www.tornadoweb.org/en/stable/}, dostęp \today
+\bibitem{pigpio} Biblioteka \texttt{pigpio} - \textit{https://abyz.me.uk/rpi/pigpio/}, dostęp \today
+\bibitem{websockets} Biblioteka \texttt{websockets} - \textit{https://pypi.org/project/websockets/}, dostęp \today
+\bibitem{websockets-api} WebSocket API Javascript - \textit{https://developer.mozilla.org/en-US/docs/Web/API/WebSocket}, dostęp \today
+\end{thebibliography}
+%----------------------------------------------------------------------
+\end{document}
