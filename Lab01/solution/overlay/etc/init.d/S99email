@@ -1,0 +1,43 @@
+#!/usr/bin/lua
+
+---
+--- This script sends an email on system startup and shutdown with a delay.
+---
+
+local email_recipient = "adgrac@op.pl"
+local subject_prefix = "System notification"
+
+local function send_email(action)
+    local subject = subject_prefix .. ": " .. action
+    local body = "System " .. action
+
+    -- Construct the msmtp command
+    local email_command = string.format(
+        "echo -e \"Subject: %s\\n\\n%s\" | msmtp %s",
+        subject, body, email_recipient
+    )
+
+    -- Print execution status
+    print("Executing Lua script at system " .. action .. "...")
+
+    -- Introduce a 5-second delay before sending the email
+    print("Waiting for 5 seconds before sending email...")
+    os.execute("sleep 5")
+
+    -- Print the command for debugging
+    print("Executing command: " .. email_command)
+
+    -- Execute the command
+    os.execute(email_command)
+
+    -- Confirm execution
+    print("Email sent successfully for system " .. action)
+end
+
+local action = arg[1]
+
+if action == "start" or action == "stop" then
+    send_email(action)
+else
+    print("Usage: " .. arg[0] .. " <start|stop>")
+end
