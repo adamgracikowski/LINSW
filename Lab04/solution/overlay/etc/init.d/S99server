@@ -1,0 +1,23 @@
+#!/bin/sh
+
+case "$1" in
+    start)
+        echo ">> Starting Tornado server..."
+        cd /usr/server
+        python3 ./server.py 8881 192.168.145.221 &
+        ;;
+    stop)
+        echo ">> Stopping Tornado server..."
+        pkill -f server.py
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
