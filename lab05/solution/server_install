@@ -1,0 +1,20 @@
+#!/bin/sh 
+
+echo "== Aktualizacja opkg ==" 
+opkg update 
+echo "== Instalacja Python 3 ==" 
+opkg install python3 
+python3 --version 
+
+echo "== Instalacja bibliotek Python (Tornado, WebSocket, OpenSSL) ==" 
+opkg install python3-tornado \ 
+             python3-websocket-client \ 
+             python3-websockets \ 
+             python3-pyopenssl 
+
+echo "== Instalacja pip ==" 
+opkg install python3-pip 
+pip3 --version 
+
+echo "== Instalacja UniversalGPIO z pip ==" 
+pip3 install UniversalGPIO 

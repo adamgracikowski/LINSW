@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orders Dashboard</title>
+  <style>
+    /* Reset */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f0f2f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    form {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    form fieldset {
+      border: none;
+    }
+
+    form legend {
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+      color: #555;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+      color: #555;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+    }
+
+    .btn, .btn-link {
+      display: inline-block;
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: background 0.2s;
+    }
+
+    .btn {
+      background: #007bff;
+      color: #fff;
+      border: none;
+    }
+
+    .btn:hover { background: #0056b3; }
+    .btn:active { background: #00408d; }
+
+    .btn-link {
+      background: #6c757d;
+      color: #fff;
+      border: none;
+      margin-left: 1rem;
+    }
+
+    .btn-link:hover { background: #5a6268; }
+    .btn-link:active { background: #4e555b; }
+
+    #alert {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+      display: none;
+      position: relative;
+    }
+
+    #alert button {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #721c24;
+      color: #fff;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      border-radius: 3px;
+      font-size: 0.8rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: left;
+    }
+
+    th {
+      background: #f7f7f7;
+      font-weight: 600;
+    }
+
+    tbody tr:hover {
+      background: #f1f1f1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Orders Dashboard</h1>
+    <form method="POST" action="{{ Routes.home }}">
+      <fieldset>
+        <legend>New Order</legend>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input name="name" id="name" required placeholder="Order name" />
+          </div>
+          <div class="form-group">
+            <label for="quantity_a">Qty A</label>
+            <input name="quantity_a" id="quantity_a" type="number" value="1" min="1"/>
+          </div>
+          <div class="form-group">
+            <label for="quantity_b">Qty B</label>
+            <input name="quantity_b" id="quantity_b" type="number" value="1" min="1"/>
+          </div>
+          <div class="form-group">
+            <label for="quantity_c">Qty C</label>
+            <input name="quantity_c" id="quantity_c" type="number" value="1" min="1"/>
+          </div>
+        </div>
+        <button type="submit" class="btn">Create Order</button>
+        <a href="{{ Routes.logout }}" class="btn-link">Logout</a>
+      </fieldset>
+    </form>
+
+    <!-- Failure Alert -->
+    <div id="alert">
+      <span id="alert-msg">Production line failure!</span>
+      <button id="clear-failure">Clear</button>
+    </div>
+
+    <h2>Pending Orders</h2>
+    <table>
+      <thead><tr>
+        <th>ID</th><th>Name</th><th>A</th><th>B</th><th>C</th><th>Status</th>
+      </tr></thead>
+      <tbody id="pending"></tbody>
+    </table>
+
+    <h2>In-Progress Orders</h2>
+    <table>
+      <thead><tr>
+        <th>ID</th><th>Name</th><th>A</th><th>B</th><th>C</th><th>Status</th>
+      </tr></thead>
+      <tbody id="in_progress"></tbody>
+    </table>
+
+    <h2>Completed Orders</h2>
+    <table>
+      <thead><tr>
+        <th>ID</th><th>Name</th><th>A</th><th>B</th><th>C</th><th>Status</th>
+      </tr></thead>
+      <tbody id="completed"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const ws = new WebSocket(`ws://${location.host}/ui`);
+    ws.onmessage = e => {
+      const msg = JSON.parse(e.data);
+      const { type, extra } = msg;
+
+      function addRow(section, o) {
+        const tbody = document.getElementById(section);
+        const tr = document.createElement('tr');
+        tr.id = section + '-' + o.id;
+        tr.innerHTML = `
+          <td>${o.id}</td>
+          <td>${o.name}</td>
+          <td>${o.progress_a}/${o.quantity_a}</td>
+          <td>${o.progress_b}/${o.quantity_b}</td>
+          <td>${o.progress_c}/${o.quantity_c}</td>
+          <td>${o.status}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      function updateRow(section, o) {
+        const tr = document.getElementById(section + '-' + o.id);
+        if (!tr) return;
+        const cells = tr.children;
+        cells[2].textContent = `${o.progress_a}/${o.quantity_a}`;
+        cells[3].textContent = `${o.progress_b}/${o.quantity_b}`;
+        cells[4].textContent = `${o.progress_c}/${o.quantity_c}`;
+        cells[5].textContent = o.status;
+      }
+
+      function moveRow(from, to, o) {
+        const tr = document.getElementById(from + '-' + o.id);
+        if (!tr) return;
+        tr.id = to + '-' + o.id;
+        document.getElementById(to).appendChild(tr);
+      }
+
+      document.getElementById('clear-failure').onclick = () => {
+        ws.send(JSON.stringify({ type: "{{ Messages.clear_failure }}" }));
+      };
+
+      if(extra.has_failure){
+        document.getElementById('alert').style.display = 'block';
+      }
+
+      switch(type) {
+        case "{{ Messages.init_ui }}":
+          extra.pending.forEach(o => addRow('pending', o));
+          extra.in_progress.forEach(o => addRow('in_progress', o));
+          extra.completed.forEach(o => addRow('completed', o));
+          break;
+        case "{{ Messages.new_order }}":
+          addRow('pending', extra);
+          break;
+        case "{{ Messages.order_started }}":
+          moveRow('pending', 'in_progress', extra);
+          break;
+        case "{{ Messages.order_progress }}":
+          updateRow('in_progress', extra);
+          break;
+        case "{{ Messages.order_completed }}":
+          moveRow('in_progress', 'completed', extra);
+          break;
+        case "{{ Messages.order_failed }}":
+          document.getElementById('alert').style.display = 'block';
+          break;
+        case "{{ Messages.clear_failure }}":
+          document.getElementById('alert').style.display = 'none';
+          break;
+      }
+    }
+  </script>
+</body>
+</html>

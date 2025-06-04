@@ -1,0 +1,206 @@
+\documentclass{article}
+%----------------------------------------------------------------------
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{siunitx}
+\usepackage{enumitem}
+\usepackage{dirtree}
+\usepackage{verbatim}
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+
+%----------------------------------------------------------------------
+% strona tytułowa:
+
+\begin{document}
+\begin{titlepage}
+    \centering
+    \vfill    
+    {\fontsize{40}{20}\selectfont \textbf{Linux w systemach wbudowanych} \par}
+    \vspace{2cm}
+    {\fontsize{30}{20}\selectfont Laboratorium L5 G1\par}
+    \vspace{2cm}
+    {\fontsize{20}{20}\selectfont Sprawozdanie\par}
+    \vfill
+    {\fontsize{10}{20}\selectfont Adam Grącikowski, 327350\par}
+    \vspace{1cm}
+    Warszawa, \today
+\end{titlepage}
+
+
+%----------------------------------------------------------------------
+% spis treści:
+
+\tableofcontents
+\newpage
+%----------------------------------------------------------------------
+\section{Cel ćwiczenia laboratoryjnego}
+
+Celem ćwiczenia laboratoryjnego było uruchomienie i dostosowanie rozwiązania zrealizowanego w ramach czwartego zadania laboratoryjnego, tym razem w środowisku opartym na systemie OpenWrt. W odróżnieniu od poprzedniego ćwiczenia, w którym wykorzystano środowisko Buildroot do budowy systemu, w niniejszym zadaniu zastosowano prekompilowany obraz OpenWrt. 
+
+Ćwiczenie miało na celu zapoznanie się z konfiguracją i dostosowywaniem gotowego systemu OpenWrt do potrzeb konkretnej aplikacji.
+
+\section{System Kolejkowania Zleceń Produkcyjnych}
+
+Aplikacja, którą należało uruchomić w ramach niniejszego zadania, to program zaimplementowany podczas czwartego ćwiczenia laboratoryjnego. W moim przypadku była to aplikacja realizująca System Kolejkowania Zleceń Produkcyjnych.
+
+Szczegółowe założenia projektowe oraz opis działania interfejsów — zarówno planisty, jak i pracownika linii produkcyjnej — zostały zawarte w raporcie do poprzedniego zadania laboratoryjnego.
+
+\section{Przeniesienie rozwiązania na OpenWrt}
+
+\subsection{Pobranie wersji prekompilowanego}
+
+Pierwszym krokiem w kierunku przeniesienia rozwiązania na OpenWrt było pobranie i przeniesienie na płytkę Raspberry Pi 4 prekompilowanej wersji systemu.
+
+Zgodnie z materiałami wykładowymi, jako źródło prekompilowanej wersji wybrana została odpowiednia dla platformy docelowej zakładka oficjalnej strony OpenWrt, czyli \href{https://downloads.openwrt.org/releases/24.10.1/targets/bcm27xx/bcm2711/}{brcm27xx/bcm2711}. 
+
+Na tej stronie pobrany został plik skompresowany \texttt{rpi-4-ext4-factory.img.gz}. Plik ten został następnie rozpakowany, a obraz systemu został wgrany na kartę pamięci przy pomocy polecenia \texttt{dd}.
+
+\subsection{Konfiguracja sieci w OpenWrt}
+
+Zgodnie z materiałami wykładowymi, dokonana została modyfikacja obsługi sieci w OpenWrt przez podłączenie do rzeczywistej sieci.
+
+Należało dokonać edycji zbioró \texttt{/etc/config/network} poprzez zamianę istniejącej konfiguracji interfejsu \texttt{lan} następującą konfiguracją:
+
+\begin{verbatim}
+config interface 'lan'
+    option ifname 'eth0'
+    option proto 'dhcp'
+\end{verbatim}
+
+Po skończonej edycji wywołano \texttt{/etc/init.d/network reload} oraz usunięto zbiór uruchamiający serwer DNS/DHCP dnsmasq poleceniem \texttt{rm /etc/rc.d/S19dnsmasq}.
+
+\subsection{Konfiguracja środowiska OpenWrt}
+\label{konfiguracja}
+
+W celu uruchomienia aplikacji Systemu Kolejkowania Zleceń Produkcyjnych w środowisku OpenWrt, konieczne było przygotowanie systemu poprzez instalację odpowiednich pakietów. Ponieważ aplikacja została zaimplementowana w języku Python, pierwszym krokiem było zaktualizowanie listy dostępnych pakietów oraz zainstalowanie interpretera Python 3:
+
+\begin{verbatim}
+opkg update
+opkg install python3
+python3 --version
+\end{verbatim}
+
+Następnie zainstalowano biblioteki niezbędne do działania aplikacji, w szczególności związane z obsługą serwera HTTP oraz komunikacją WebSocket. Użyto do tego poniższego polecenia:
+
+\begin{verbatim}
+opkg install python3-tornado \
+             python3-websocket-client \
+             python3-websockets \
+             python3-pyopenssl
+\end{verbatim}
+
+W dalszej kolejności zainstalowano menedżer pakietów \texttt{pip}, który umożliwia instalację dodatkowych modułów Python:
+
+\begin{verbatim}
+opkg install python3-pip
+pip --version
+\end{verbatim}
+
+Na zakończenie, za pomocą \texttt{pip}, zainstalowano bibliotekę \texttt{UniversalGPIO}, która była wymagana do poprawnego działania aplikacji w warstwie sprzętowej:
+
+\begin{verbatim}
+pip install UniversalGPIO
+\end{verbatim}
+
+Tak przygotowane środowisko umożliwiło uruchomienie aplikacji w systemie OpenWrt bez konieczności jego rekompilacji.
+
+Skrypt zawierający wszystkie polecenia wymienione w tym podrozdziale został dołączony wraz z raportem. Jego nazwa to \texttt{server\_install}.
+
+\subsection{Przeniesienie kodu źródłowego}
+
+Skompresowany plik z całym kodem źródłowym został przeniesiony na urządzenie docelowe przy pomocy polecenia \texttt{wget}.
+
+\begin{figure}[H]
+    \dirtree{%
+    .1 /server.
+    .2 templates/.
+    .3 index.html.
+    .3 login.html.
+    .3 login\_failed.html.
+    .2 handlers/.
+    .3 base.py.
+    .3 auth.py.
+    .3 \_\_init\_\_.py.
+    .2 /logs.
+    .3 events.log.
+    .2 config.py.
+    .2 models.py.
+    .2 enums.py.
+    .2 dtos.py.
+    .2 notifications.py.
+    .2 messages.py.
+    .2 hardware.py.
+    .2 storage.py.
+    .2 orders.json.
+    .2 routes.py.
+    .2 server.py.
+    .2 client.py.
+    }
+    \caption{Struktura plików w projekcie \texttt{server}}
+    \label{fig:tree}
+\end{figure}
+
+Folder \texttt{server} z całym kodem źródłowym został umieszczony w folderze \texttt{/usr}. Skryptom \texttt{server.py} oraz \texttt{client.py} nadane zostały uprawnienia do wykonywania:
+
+\begin{verbatim}
+    chmod +x server.py client.py
+\end{verbatim}
+
+Następnie, w folderze \texttt{/etc/init.d} umieszczony został zmodyfikowany skrypt \texttt{S99server}, uruchamiający serwer podczas startu systemu. Został on przystosowany do środowiska OpenWrt. Skrypt ten został przesłany wraz z raportem.
+
+Ważnymi poleceniami dla poprawnego działania skryptu były:
+
+\begin{verbatim}
+    chmod +x /etc/init.d/S99server 
+    /etc/init.d/S99server enable
+\end{verbatim}
+
+Poprawność działania skryptu można było przetestować manualnie w następujący sposób:
+
+\begin{verbatim}
+    /etc/init.d/S99server start 
+    /etc/init.d/S99server stop 
+\end{verbatim}
+
+\subsection{Problemy z biblioteką do obsługi GPIO}
+
+W podrozdziale \ref{konfiguracja} poleceniem \texttt{pip install UniversalGPIO} pobrana została biblioteka \texttt{UniversalGPIO}. Nie był to jednak oczywisty wybór z racji na fakt, że w poprzedniej implementacji projektu, wykorzystywana była biblioteka \texttt{pigpio} oraz związany z nią daemon \texttt{pigpiod}.
+
+Z powodu problemów z konfiguracją daemona na systemie docelowym, zdecydowałem się na zmianę implementacji klasy \texttt{GPIOModule} tak, aby wykorzystywała inną bibliotekę do obsługi przycisków oraz diód. Dzięki zastosowaniu interfejsu \texttt{HardwareModule}, który stanowił abstrakcję na operacje wykonywane na GPIO, zmiany w projekcie ograniczyły się tylko do tej pojedynczej klasy.
+
+\section{Podsumowanie}
+
+Ćwiczenie laboratoryjne miało na celu praktyczne zapoznanie się z procesem uruchamiania aplikacji w systemie OpenWrt z wykorzystaniem gotowego, prekompilowanego obrazu. Przeniesienie wcześniej stworzonego rozwiązania — Systemu Kolejkowania Zleceń Produkcyjnych — do nowego środowiska pozwoliło na pogłębienie wiedzy z zakresu konfiguracji systemu, instalacji zależności oraz integracji aplikacji z mechanizmem autostartu w OpenWrt.
+
+Ćwiczenie miało przede wszystkim charakter edukacyjny i pozwoliło na zdobycie cennych doświadczeń związanych z praktycznym zastosowaniem systemu OpenWrt w kontekście systemów wbudowanych. 
+
+Podczas realizacji zadania napotkano jednak pewne trudności techniczne, w szczególności:
+
+\begin{itemize}
+    \item Problemy z uruchomieniem i konfiguracją demona \texttt{pigpiod}, niezbędnego do działania wcześniej wykorzystywanej biblioteki \texttt{pigpio}, co uniemożliwiło jej zastosowanie w środowisku OpenWrt.
+    \item Konieczność dostosowania aplikacji do nowej biblioteki obsługującej GPIO — \texttt{UniversalGPIO}. Dzięki zastosowanej architekturze z warstwą abstrakcji sprzętowej (\texttt{HardwareModule}) modyfikacje ograniczyły się jedynie do jednej klasy.
+    \item Ręczna konfiguracja sieci oraz systemowych usług startowych (takich jak skrypt \texttt{S99server}), wymagająca dobrej znajomości struktury plików i mechanizmów OpenWrt.
+\end{itemize}
+
+Pomimo tych trudności, udało się uruchomić aplikację w docelowym środowisku i zapewnić jej pełną funkcjonalność. Ćwiczenie było wartościowe zarówno z perspektywy technicznej, jak i dydaktycznej.
+
+
+%----------------------------------------------------------------------
+% bibliografia:
+
+\begin{thebibliography}{9}
+\bibitem{lecture} dr hab. inż. Wojciech Zabołotny, prezentacja do \textit{Wykładu 8.}
+\bibitem{openwrt} Oficjalna strona środowiska OpenWrt -
+
+\textit{https://downloads.openwrt.org/releases/24.10.1/targets/bcm27xx/bcm2711/}, dostęp \today
+\bibitem{tornado} Biblioteka \texttt{Tornado} - \textit{https://www.tornadoweb.org/en/stable/}, dostęp \today
+\bibitem{universalgpio} Biblioteka \texttt{UniversalGPIO} - \textit{https://pypi.org/project/UniversalGPIO/}, dostęp \today
+\end{thebibliography}
+%----------------------------------------------------------------------
+\end{document}
