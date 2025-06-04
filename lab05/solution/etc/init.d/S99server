@@ -4,24 +4,22 @@ START=99
 STOP=10
 
 start() {
-    echo "Startuję serwer Python Tornado w tle..."
+    echo "Starting server..."
     cd /usr/server
-    # Uruchomienie w tle; przekierowanie logów do /var/log/server.log
     nohup python3 server.py 5001 192.168.144.15 >> /var/log/server.log 2>&1 &
-    # Zapisz PID do pliku, żeby później móc zabić właściwy proces
     echo $! > /var/run/server.pid
-    echo "Serwer uruchomiony, PID=$(cat /var/run/server.pid)."
+    echo "Server started, PID=$(cat /var/run/server.pid)."
 }
 
 stop() {
-    echo "Zatrzymuję serwer Python Tornado..."
+    echo "Stopping server..."
     if [ -f /var/run/server.pid ]; then
         PID=$(cat /var/run/server.pid)
         kill "$PID" 2>/dev/null
         rm -f /var/run/server.pid
-        echo "Serwer (PID=$PID) zatrzymany."
+        echo "Server (PID=$PID) stopped."
     else
-        echo "Plik /var/run/server.pid nie istnieje – serwer prawdopodobnie nie był uruchomiony."
+        echo "File /var/run/server.pid does not exist - the server might not have been run."
     fi
 }
 
