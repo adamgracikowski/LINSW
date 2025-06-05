@@ -1,97 +1,23 @@
-# Lab02
+# Lab02: Implementacja własnego pakietu w środowisku Buildroot
 
-Pobranie środowiska:
+Polecenie do zadania: [tutaj](https://github.com/adamgracikowski/LINSW/blob/main/lab02/polecenie.pdf)
+Sprawozdanie z wykonania zadania: [tutaj](https://github.com/adamgracikowski/LINSW/blob/main/lab02/overleaf/main.pdf)
 
-```bash
-mkdir -p /malina/gracikowskia/ccache-br \
-  && cd /malina/gracikowskia \
-  && wget https://buildroot.org/downloads/buildroot-2024.11.2.tar.xz \
-  && tar -xJf buildroot-2024.11.2.tar.xz \
-  && cd buildroot-2024.11.2
-```
+## Opis funkcjonalności pakietu `Morse`
 
-Wstępna konfiguracja Buildroot-a:
+Aplikacja realizuje prosty symulator alfabetu Morse'a z interfejsem opartym o trzy przyciski i jedną diodę LED.
 
-```bash
-make raspberrypi4_64_defconfig \
-  && make nconfig
-```
+### Funkcjonalności przycisków są następujące:
 
-Kompilacja aplikacji:
+- Przycisk `DOT` - po jego naciśnięciu do sekwencji sygnałów dodawany jest krótki sygnał (kropka),
+- Przycisk `DASH` - po jego naciśnięciu do sekwencji sygnałów dodawany jest długi sygnał (pauza, czyli myślnik),
+- Przycisk `ACCEPT` - po jego naciśnięciu, użytkownik zatwierdza sekwencję, która następnie zostaje odtworzona przy użyciu diody LED.
 
-```bash
-cd /malina/gracikowskia/buildroot-2024.11.2/packages/morse/src \
-  && code .
+Program kończy działanie po wyświetleniu całej wprowadzonej sekwencji sygnałów.
 
-source /malina/gracikowskia/buildroot-2024.11.2/output/host/environment-setup
+### Działanie wyświetlania
 
-rm *.o \
-  && rm morse \
-  && make
-```
-
-Uruchamianie serwera http:
-
-```bash
-ip a
-
-python3 -m http.server
-```
-
-Minicom:
-
-```bash
-minicom -D /dev/ttyUSB0
-
-mount /dev/mmcblk0p1 /mnt \
-  && cd /mnt/user \
-  && ls -la
-```
-
-Pobieranie aplikacji na urządzenie:
-
-```bash
-rm morse \
-  && wget 192.168.122.1:8000/morse \
-  && chmod +x morse \
-  && ./morse
-```
-
-Partycjonowanie i formatowanie karty SD RPi:
-
-```bash
-fdisk /dev/mmcblk0
-D
-3
-D
-2
-N
-P
-2
-<enter>
-+500M
-N
-P
-3
-<enter>
-+500M
-W
-
-mkfs.ext4 /dev/mmcblk0p2
-mkfs.ext4 /dev/mmcblk0p3
-
-wget -O - 192.168.145.101:8000/rootfs.ext2 | dd of=/dev/mmcblk0p2 bs=4096
-# rootfs.ext2 z output/images dla systemu User-a
-
-resize2fs /dev/mmcblk0p2
-```
-
-Konfiguracja domowa:
-
-```bash
-mkdir -p /home/adam/linsw/ccache-br \
-  && cd /home/adam/linsw \
-  && wget https://buildroot.org/downloads/buildroot-2024.11.2.tar.xz \
-  && tar -xJf buildroot-2024.11.2.tar.xz \
-  && cd buildroot-2024.11.2
-```
+- Po zatwierdzeniu sekwencji, system iteruje po wprowadzonych sygnałach.
+- Dla kropki dioda zapala się na krótki czas ($400ms$).
+- Dla myślnika dioda zapala się na dłuższy czas ($800ms$).
+- Pomiędzy kolejnymi sygnałami następuje krótkie wyłączenie ($200ms$).

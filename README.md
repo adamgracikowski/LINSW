@@ -11,7 +11,7 @@ Repozytorium zawiera projekty zrealizowane w ramach przedmiotu obieralnego _Linu
   - lab04: [Złożony interfejs użytkownika z wykorzystaniem GPIO](https://github.com/adamgracikowski/LINSW/tree/main/lab04)
   - lab05: [Przenoszenie istniejącej aplikacji na środowisko OpenWrt](https://github.com/adamgracikowski/LINSW/tree/main/lab05)
 
-> Foldery dla poszczególnych zadań zawierają podfoldery:
+Foldery dla poszczególnych zadań zawierają podfoldery:
 
 - `/solution` zawierający pliki konfiguracyjne środowiska Buildroot oraz nakładki na wygenerowane obrazy systemu z kodem źródłowym oraz skryptami uruchamiającymi.
 - `/overleaf` zawierający sprawozdanie (w formacie `.pdf` oraz źródłowym `.tex`) z wykonania zadania wraz z opisem dokonanych modyfikacji
