@@ -1,13 +1,14 @@
 # Lab02: Implementacja własnego pakietu w środowisku Buildroot
 
 Polecenie do zadania: [tutaj](https://github.com/adamgracikowski/LINSW/blob/main/lab02/polecenie.pdf)
+
 Sprawozdanie z wykonania zadania: [tutaj](https://github.com/adamgracikowski/LINSW/blob/main/lab02/overleaf/main.pdf)
 
 ## Opis funkcjonalności pakietu `Morse`
 
 Aplikacja realizuje prosty symulator alfabetu Morse'a z interfejsem opartym o trzy przyciski i jedną diodę LED.
 
-### Funkcjonalności przycisków są następujące:
+### Funkcjonalności przycisków
 
 - Przycisk `DOT` - po jego naciśnięciu do sekwencji sygnałów dodawany jest krótki sygnał (kropka),
 - Przycisk `DASH` - po jego naciśnięciu do sekwencji sygnałów dodawany jest długi sygnał (pauza, czyli myślnik),

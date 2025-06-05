@@ -1,6 +1,7 @@
 # Lab04: Złożony interfejs użytkownika z wykorzystaniem GPIO
 
 Polecenie do zadania: [tutaj](https://github.com/adamgracikowski/LINSW/blob/main/lab04/polecenie.pdf)
+
 Sprawozdanie z wykonania zadania: [tutaj](https://github.com/adamgracikowski/LINSW/blob/main/lab04/overleaf/main.pdf)
 
 ## Opis aplikacji
@@ -13,9 +14,9 @@ System składa się z dwóch modułów:
 Wprzyjętym modelu każde zamówienie tworzone przez planistę składa się z nazwy oraz okre
 ślonej liczby sztuk trzech rodzajów elementów (produktów):
 
-- Kategorii A,
-- Kategorii B,
-- Kategorii C.
+- Kategorii `A`,
+- Kategorii `B`,
+- Kategorii `C`.
 
 ### Webowy interfejs planisty
 
