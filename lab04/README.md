@@ -11,8 +11,7 @@ System składa się z dwóch modułów:
 - Webowego interfejsu planisty,
 - Hardware’owego modułu pracownika linii produkcyjnej.
 
-Wprzyjętym modelu każde zamówienie tworzone przez planistę składa się z nazwy oraz okre
-ślonej liczby sztuk trzech rodzajów elementów (produktów):
+W przyjętym modelu każde zamówienie tworzone przez planistę składa się z nazwy oraz określonej liczby sztuk trzech rodzajów elementów (produktów):
 
 - Kategorii `A`,
 - Kategorii `B`,
